@@ -1,7 +1,6 @@
 import argparse
 from datetime import timezone, timedelta
 
-
 def validate_timezone(value) -> timedelta:
     """
     Validates the timezone input for argparse. Accepts values like +0, +2, -5.5, etc.
