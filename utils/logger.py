@@ -71,5 +71,4 @@ def set_up_logger(log_lvl: str, log_path: str) -> logging.Logger:
 
     return logger
 
-
 logger = set_up_logger(log_lvl=args.log_lvl, log_path=args.log_path)
