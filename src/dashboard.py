@@ -455,7 +455,6 @@ class ConsensusDashboard:
                 auto_refresh=True,
                 screen=True,
             ) as live:
-
                 while True:
                     log_renderable = self.rich_logger.get_logs()
                     log_panel = Panel(log_renderable, expand=True, box=box.SIMPLE)
