@@ -32,6 +32,7 @@ class ConsensusDashboard:
         session: ClientSession,
         genesis: str
     ):
+        
         self.rpc = rpc
         self.session = session
         self.genesis = genesis
@@ -44,8 +45,6 @@ class ConsensusDashboard:
         self.layout = Layout()
         self.console = Console()
         self.validators = []
-
-        # self.genesis_validators = []
 
         self.consensus_state = {}
 
@@ -449,12 +448,11 @@ class ConsensusDashboard:
         try:
             self.dirty_network_info = True
             self.dirty_consensus_info = True
-            # self.dirty_logs = True
 
             with Live(
                 self.layout,
                 refresh_per_second=self.refresh_per_second,
-                auto_refresh=False,
+                auto_refresh=True,
                 screen=True,
             ) as live:
 
@@ -475,7 +473,6 @@ class ConsensusDashboard:
                     new_upgrade_info = {
                         "upgrade_name": self.upgrade_name,
                         "upgrade_height": self.upgrade_height,
-                        # "upgrade_time_left_seconds": self.upgrade_time_left_seconds,
                     }
                     
                     if self.has_data_changed(new_node_status, self.previous_node_status) or self.has_data_changed(new_upgrade_info, self.previous_upgrade_info):
@@ -539,7 +536,7 @@ class ConsensusDashboard:
 
                     if self.has_data_changed(self.consensus_state, self.previous_consensus_state):
                         logger.debug(f"Consensus state has changed")
-                        
+
                         self.dirty_consensus_info = True
                         self.layout["main"].update(self.generate_table())
 
@@ -594,23 +591,167 @@ class ConsensusDashboard:
                         
                         self.previous_consensus_state = self.consensus_state.copy()
 
-                    ### TO DO [MAKE REFRESH WHEN DATA OR LOGS GET UPDATED]
                     if any(
                         [
                             self.dirty_network_info,
                             self.dirty_consensus_info
                         ]
                     ):
-                        live.refresh()
+                        # live.refresh()
                         self.dirty_network_info = False
                         self.dirty_consensus_info = False
-                    
-                    # live.refresh()
-
 
         finally:
             await self.close_session()
             self.console.clear()
+
+    # async def start(self):
+    #     try:
+
+    #         with Live(
+    #             self.layout,
+    #             refresh_per_second=self.refresh_per_second,
+    #             auto_refresh=True,
+    #             screen=True,
+    #         ) as live:
+
+    #             while True:
+    #                 log_renderable = self.rich_logger.get_logs()
+    #                 log_panel = Panel(log_renderable, expand=True, box=box.SIMPLE)
+    #                 self.layout["header"]["logs"].update(log_panel)
+
+    #                 await self.batch_update_data()
+
+    #                 new_node_status = {
+    #                     "synced": self.synced,
+    #                     "node_height": self.node_height,
+    #                     "chain_id": self.chain_id,
+    #                     "block_time": self.block_time,
+    #                 }
+
+    #                 new_upgrade_info = {
+    #                     "upgrade_name": self.upgrade_name,
+    #                     "upgrade_height": self.upgrade_height,
+    #                 }
+
+    #                 self.dirty_network_info = True
+    #                 network_info = (
+    #                     f"[bold cyan]Node Online & Synced:[/bold cyan] {self.synced}\n"
+    #                     f"[bold cyan]Height:[/bold cyan] {self.node_height}\n"
+    #                     f"[bold cyan]Chain ID:[/bold cyan] {self.chain_id}\n"
+    #                 )
+    #                 if self.block_time:
+    #                     network_info += f"[bold cyan]Block time:[/bold cyan] {self.block_time:.4}s\n"
+
+    #                     if self.upgrade_height and self.node_height:
+    #                         self.update_upgrade_time()
+    #                         blocks_left = self.upgrade_height - self.node_height
+    #                         network_info += (
+    #                             f"[bold cyan]Upgrade:[/bold cyan] {self.upgrade_name} | "
+    #                             f"Height: {self.upgrade_height} | Blocks left: {blocks_left}"
+    #                         )
+    #                         if self.upgrade_time_left_seconds and self.upgrade_time_left_seconds >= 0:
+    #                             current_time_unix = int(datetime.now().replace(tzinfo=timezone.utc).timestamp())
+    #                             upgrade_time_unix = self.upgrade_time_left_seconds + current_time_unix
+
+    #                             time = datetime.fromtimestamp(upgrade_time_unix, timezone.utc)
+    #                             time_in_user_tz = time.astimezone(self.user_tz).strftime("%Y-%m-%d %H:%M:%S")
+    #                             network_info += f" | Time: {time_in_user_tz}"
+
+    #                             days, remainder = divmod(self.upgrade_time_left_seconds, 86400)
+    #                             hours, remainder = divmod(remainder, 3600)
+    #                             minutes, seconds = divmod(remainder, 60)
+
+    #                             parts = []
+    #                             if days > 0:
+    #                                 parts.append(f"{days} day{'s' if days > 1 else ''}")
+    #                             if hours > 0:
+    #                                 parts.append(f"{hours} hour{'s' if hours > 1 else ''}")
+    #                             if minutes > 0:
+    #                                 parts.append(f"{minutes} minute{'s' if minutes > 1 else ''}")
+    #                             if seconds > 0 or not parts:
+    #                                 parts.append(f"{seconds} second{'s' if seconds > 1 else ''}")
+
+    #                             human_readable_countdown = "in " + " ".join(parts)
+
+    #                             network_info += f" ({human_readable_countdown})"
+    #                         else:
+    #                             network_info += " (already occurred)"
+                    
+    #                 network_info_panel = Panel(
+    #                     network_info,
+    #                     title="Network Info",
+    #                     border_style="blue_violet",
+    #                     expand=True,
+    #                 )
+    #                 self.layout["header"]["network_info"].update(
+    #                     network_info_panel
+    #                 )
+    #                 self.previous_node_status = new_node_status.copy()
+    #                 self.previous_upgrade_info = new_upgrade_info.copy()
+
+    #                 logger.debug(f"Consensus state has changed")
+
+    #                 self.dirty_consensus_info = True
+    #                 self.layout["main"].update(self.generate_table())
+
+    #                 prevote_bar = self.create_progress_bar(
+    #                     label="[ Prevotes ]",
+    #                     value=self.consensus_state["prevote_array"],
+    #                     _max=100,
+    #                     is_percentage=True,
+    #                 )
+
+    #                 precommit_bar = self.create_progress_bar(
+    #                     label="[Precommits]",
+    #                     value=self.consensus_state["precommits_array"],
+    #                     _max=100,
+    #                     is_percentage=True,
+    #                 )
+
+    #                 step_bar = self.create_progress_bar(
+    #                     label="[   Step   ]",
+    #                     value=self.consensus_state["step"],
+    #                     _max=6,
+    #                     is_percentage=False,
+    #                 )
+
+    #                 votes_commits_renderable = (
+    #                     f"{prevote_bar}\n{precommit_bar}\n{step_bar}"
+    #                 )
+
+    #                 votes_commits_panel = Panel(
+    #                     votes_commits_renderable, box=box.SIMPLE, expand=True
+    #                 )
+    #                 self.layout["footer"].update(votes_commits_panel)
+
+    #                 consensus_info = (
+    #                     f"[bold cyan]Height/Round/Step:[/bold cyan] {self.consensus_state['height']}/"
+    #                     f"{self.consensus_state['round']}/{self.consensus_state['step']}\n"
+    #                     f"[bold cyan]Proposer:[/bold cyan] {self.consensus_state['proposer_moniker']}\n"
+    #                     f"[bold cyan]Proposal Hash:[/bold cyan] {self.consensus_state['hash'] or 'N/A'}\n"
+    #                     f"[bold cyan]Online validators:[/bold cyan] {self.online_validators} / {len(self.validators)}\n"
+    #                     f"[bold cyan]Prevoting validators:[/bold cyan] {self.prevoting_validators}\n"
+    #                     f"[bold cyan]Precommitting validators:[/bold cyan] {self.precommitting_validators}\n"
+    #                 )
+    #                 consensus_info_panel = Panel(
+    #                     consensus_info,
+    #                     title="Consensus Info",
+    #                     border_style="green",
+    #                     expand=True,
+    #                 )
+    #                 self.layout["header"]["consensus_info"].update(
+    #                     consensus_info_panel
+    #                 )
+                    
+    #                 self.previous_consensus_state = self.consensus_state.copy()
+
+    #                 # live.refresh()
+
+
+    #     finally:
+    #         await self.close_session()
+    #         self.console.clear()
 
     async def update_data(
         self, update_func: Callable, refresh_interval: int, last_update_time_attr: str
